@@ -5,19 +5,22 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <limits.h>
 
+// Represents one patient's data
 typedef struct Instance { 
-     int clump_thickness;
-     int uniformity_of_cell_size;
-     int uniformity_of_cell_shape;
-     int marginal_adhesion;
-     int single_epithelial_cell_size;
-     int bare_nuclei;
-     int bland_chromation;
-     int normal_nucleoli;
-     int mitoses;
-     int class;
-     int distance;
+    double id;
+    double clump_thickness;
+    double uniformity_of_cell_size;
+    double uniformity_of_cell_shape;
+    double marginal_adhesion;
+    double single_epithelial_cell_size;
+    double bare_nuclei;
+    double bland_chromation;
+    double normal_nucleoli;
+    double mitoses;
+    double class;
+    double distance;
 } Instance; 
 
 // This functions reads a feature of the instance
@@ -25,18 +28,18 @@ void get_features(char* line, int *features) {
     // printf("%s", line);
     char *tok = strtok(line, ",");
     int count = 0;
-    features[count] = atoi(tok);
+    features[count] = atof(tok);
 
     while (tok != NULL) {
         count++;
         tok = strtok(NULL, ",");
         if(tok != NULL) {
-            features[count] = atoi(tok);
+            features[count] = atof(tok);
         }
     }
 }
 
-// This functions reads an instance from the csv file
+// This functions reads all instances from the csv file
 void read_instances(char* file_name, Instance* instances) {
     FILE * fp;
     char * line = NULL;
@@ -53,18 +56,19 @@ void read_instances(char* file_name, Instance* instances) {
     while ((read = getline(&line, &len, fp)) != -1) {
         // printf("Retrieved line of length %zu:\n", read);
         Instance instance;
-        int features[10];
+        int features[11];
         get_features(line, features);
-        instances[counter].clump_thickness = features[0];
-        instances[counter].uniformity_of_cell_size = features[1];
-        instances[counter].uniformity_of_cell_shape = features[2];
-        instances[counter].marginal_adhesion = features[3];
-        instances[counter].single_epithelial_cell_size = features[4];
-        instances[counter].bare_nuclei = features[5];
-        instances[counter].bland_chromation = features[6];
-        instances[counter].normal_nucleoli = features[7];
-        instances[counter].mitoses = features[8];
-        instances[counter].class = features[9];
+        instances[counter].id = features[0];
+        instances[counter].clump_thickness = features[1];
+        instances[counter].uniformity_of_cell_size = features[2];
+        instances[counter].uniformity_of_cell_shape = features[3];
+        instances[counter].marginal_adhesion = features[4];
+        instances[counter].single_epithelial_cell_size = features[5];
+        instances[counter].bare_nuclei = features[6];
+        instances[counter].bland_chromation = features[7];
+        instances[counter].normal_nucleoli = features[8];
+        instances[counter].mitoses = features[9];
+        instances[counter].class = features[10];
 
         counter++;
     }
@@ -77,8 +81,8 @@ void read_instances(char* file_name, Instance* instances) {
 
 // Sort the array of instances by increasing order of distance 
 int compare_function(const void *a,const void *b) {
-    int l = ((struct Instance*)a)->distance;
-    int r = ((struct Instance*)b)->distance;  
+    double l = ((struct Instance*)a)->distance;
+    double r = ((struct Instance*)b)->distance;
     return (l - r); 
 }
   
@@ -86,35 +90,40 @@ int compare_function(const void *a,const void *b) {
 // k nearest neighbour algorithm. It assumes only two 
 // groups and returns 2 if it belongs to benign group, else 
 // 4 (belongs to group malignant). 
-int classifyAPoint(Instance arr[], int n, int k, Instance instance) 
-{ 
+int classifyAPoint(Instance arr[], int n, int k, int exclude) { 
+    Instance train_set[699];
+    memcpy(train_set,arr, 699 * sizeof(Instance));
     // Fill distances of all points from the instance 
     for (int i = 0; i < n; i++) {
-        arr[i].distance = 
-            sqrt((arr[i].clump_thickness - instance.clump_thickness) * (arr[i].clump_thickness - instance.clump_thickness) + 
-                 (arr[i].uniformity_of_cell_size - instance.uniformity_of_cell_size) * (arr[i].uniformity_of_cell_size - instance.uniformity_of_cell_size) + 
-                 (arr[i].uniformity_of_cell_shape - instance.uniformity_of_cell_shape) * (arr[i].uniformity_of_cell_shape - instance.uniformity_of_cell_shape) +
-                 (arr[i].marginal_adhesion - instance.marginal_adhesion) * (arr[i].marginal_adhesion - instance.marginal_adhesion) +
-                 (arr[i].single_epithelial_cell_size - instance.single_epithelial_cell_size) * (arr[i].single_epithelial_cell_size - instance.single_epithelial_cell_size) +
-                 (arr[i].bare_nuclei - instance.bare_nuclei) * (arr[i].bare_nuclei - instance.bare_nuclei) +
-                 (arr[i].bland_chromation - instance.bland_chromation) * (arr[i].bland_chromation - instance.bland_chromation) +
-                 (arr[i].normal_nucleoli - instance.normal_nucleoli) * (arr[i].normal_nucleoli - instance.normal_nucleoli)                 
-                 );
+        if(i != exclude) {
+            train_set[i].distance = 
+                sqrt((train_set[i].clump_thickness - train_set[exclude].clump_thickness) * (train_set[i].clump_thickness - train_set[exclude].clump_thickness) + 
+                    (train_set[i].uniformity_of_cell_size - train_set[exclude].uniformity_of_cell_size) * (train_set[i].uniformity_of_cell_size - train_set[exclude].uniformity_of_cell_size) + 
+                    (train_set[i].uniformity_of_cell_shape - train_set[exclude].uniformity_of_cell_shape) * (train_set[i].uniformity_of_cell_shape - train_set[exclude].uniformity_of_cell_shape) +
+                    (train_set[i].marginal_adhesion - train_set[exclude].marginal_adhesion) * (train_set[i].marginal_adhesion - train_set[exclude].marginal_adhesion) +
+                    (train_set[i].single_epithelial_cell_size - train_set[exclude].single_epithelial_cell_size) * (train_set[i].single_epithelial_cell_size - train_set[exclude].single_epithelial_cell_size) +
+                    (train_set[i].bare_nuclei - train_set[exclude].bare_nuclei) * (train_set[i].bare_nuclei - train_set[exclude].bare_nuclei) +
+                    (train_set[i].bland_chromation - train_set[exclude].bland_chromation) * (train_set[i].bland_chromation - train_set[exclude].bland_chromation) +
+                    (train_set[i].normal_nucleoli - train_set[exclude].normal_nucleoli) * (train_set[i].normal_nucleoli - train_set[exclude].normal_nucleoli)                 
+                    );   
+        }else {
+            train_set[exclude].distance = INT_MAX;
+        }
     } 
 
     // Sort the instances by distance from the test instance 
-    qsort(arr, 559, sizeof(arr[0]), compare_function); 
+    qsort(train_set, 699, sizeof(train_set[0]), compare_function); 
    
-    int freq2 = 0;     // Frequency of group 2 
+    int freq2 = 0;     // Frequintency of group 2 
     int freq4 = 0;     // Frequency of group 4 
 
     for (int i = 0; i < k; i++)   // Consider only the first k elements
     { 
-        if (arr[i].class == 2) {
-            freq2++;
-        } 
+        if (train_set[i].class == 2) {
+            freq2++;    // Benign
+        }
         else {
-            freq4++;
+            freq4++;   // Melignant
         }  
     } 
   
@@ -122,24 +131,19 @@ int classifyAPoint(Instance arr[], int n, int k, Instance instance)
 } 
   
 int main() { 
-    Instance instances[559];
+    Instance instances[699];
 
     /* Read X_train */
-    read_instances("X_train.csv", instances);
+    read_instances("breast-cancer.csv", instances);
 
-    /* Test instance 4,2,1,1,1,2,3,2,1 */
-    Instance instance;
-    instance.clump_thickness = 4;
-    instance.uniformity_of_cell_size = 2;
-    instance.uniformity_of_cell_shape = 1;
-    instance.marginal_adhesion = 1;
-    instance.single_epithelial_cell_size = 1;
-    instance.bare_nuclei = 2;
-    instance.bland_chromation = 3;
-    instance.normal_nucleoli = 2;
-    instance.mitoses = 1;
+    int k = 5;      // Number of neighbors to check
+    double prediction_results_sum = 0;
 
-    int k = 5;
-    printf ("The value classified to unknown point"
-           " is %d.\n", classifyAPoint(instances, 559, k, instance)); 
+    for(int i = 0; i < 699; i++) {
+        if(classifyAPoint(instances, 699, k, i) == instances[i].class) {
+            prediction_results_sum += 1;
+        }
+    }
+
+  printf("Accuracy is: %f\n ", prediction_results_sum / 699);
 } 
