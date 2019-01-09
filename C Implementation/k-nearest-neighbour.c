@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <limits.h>
+#include <time.h>
 
 #define NUMBER_OF_FEATURES 10
 #define DATASET_NAME "breast-cancer.csv"
@@ -119,8 +120,10 @@ int main() {
     /* Read X_train */
     read_instances(DATASET_NAME, instances);
 
-    int k = 3;      // Number of neighbors to check
+    int k = 1;      // Number of neighbors to check
     double prediction_results_sum = 0;
+
+    clock_t begin = clock();
 
     for(int i = 0; i < 699; i++) {
         if(classifyAPoint(instances, 699, k, i) == instances[i].class) {
@@ -128,5 +131,9 @@ int main() {
         }
     }
 
-  printf("Accuracy is: %f\n ", prediction_results_sum / 699);
+    clock_t end = clock();
+    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+    printf("Time consumed: %f\n", time_spent);
+    printf("Accuracy is: %f\n ", prediction_results_sum / 699);
 } 
