@@ -19,13 +19,13 @@ void read_instances(char* file_name, Instance* instances) {
     int counter = 0;
 
     while ((read = getline(&line, &len, fp)) != -1) {
-        Instance instance;
-        double features[11];
+        double* features = malloc(sizeof(double) * (NUMBER_OF_FEATURES + 1));
         get_features(line, features);
         for(int i = 0; i < NUMBER_OF_FEATURES; i++) {
             instances[counter].features[i] = features[i];
         }
         instances[counter].label = features[10];
+        free(features);
 
         counter++;
     }

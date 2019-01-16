@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <stdbool.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
@@ -13,8 +12,8 @@
 // k nearest neighbour algorithm. It assumes only two 
 // groups and returns 2 if it belongs to benign group, else 
 // 4 (belongs to group malignant). 
-int classifyAPoint(Instance instances[], int n, int k, int exclude) { 
-    Instance train_set[NUMBER_OF_ELEMENTS];
+int classifyAPoint(Instance* instances, int n, int k, int exclude) { 
+    Instance* train_set = malloc(sizeof(Instance) * NUMBER_OF_ELEMENTS);
     memcpy(train_set, instances, NUMBER_OF_ELEMENTS * sizeof(Instance));
     // Fill distances of all points from the instance 
     for (int i = 0; i < n; i++) {
@@ -44,22 +43,22 @@ int classifyAPoint(Instance instances[], int n, int k, int exclude) {
         else {
             freq4++;   // Melignant
         }  
-    } 
+    }
+
+    free(train_set); 
   
     return (freq2 > freq4 ? 2 : 4); 
 }
 
-void leave_one_out_cross_validation(Instance instances[]) {
+void leave_one_out_cross_validation(Instance* instances) {
     int k = 1;      // Number of neighbors to check
     double prediction_results_sum = 0;
-
-    clock_t begin = clock();
 
     for(int i = 0; i < NUMBER_OF_ELEMENTS; i++) { // Leave one out cross validation
         if(classifyAPoint(instances, NUMBER_OF_ELEMENTS, k, i) == instances[i].label) {
             prediction_results_sum += 1;
         }
     }
-    
+
     printf("Accuracy is: %f\n ", prediction_results_sum / NUMBER_OF_ELEMENTS);
 }

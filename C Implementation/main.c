@@ -12,17 +12,11 @@
 #define DATASET_NAME "breast-cancer.csv" 
   
 int main() { 
-    Instance instances[699];
+    Instance* instances = malloc(sizeof(Instance) * NUMBER_OF_ELEMENTS);
 
-    /* Read X_train */
-    read_instances(DATASET_NAME, instances);
-
-    clock_t begin = clock();
+    read_instances(DATASET_NAME, instances); /* Read X_train */
 
     leave_one_out_cross_validation(instances);
 
-    clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-    printf("Time consumed: %f\n", time_spent);
+    free(instances);
 } 
